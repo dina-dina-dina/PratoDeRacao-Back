@@ -2,25 +2,34 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-  // Configuração do transportador
-  const transporter = nodemailer.createTransport({
-    service: 'Gmail', // Ou outro serviço
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  try {
+    // Configuração do transportador
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail', // Ou outro serviço
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-  // Configuração do email
-  const mailOptions = {
-    from: `"Pet Tech" <${process.env.EMAIL_USER}>`,
-    to: options.to,
-    subject: options.subject,
-    html: options.html,
-  };
+    // Verificar a configuração do transporter
+    await transporter.verify();
 
-  // Enviar email
-  await transporter.sendMail(mailOptions);
+    // Configuração do email
+    const mailOptions = {
+      from: `"Pet Tech" <${process.env.EMAIL_USER}>`,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    };
+
+    // Enviar email
+    await transporter.sendMail(mailOptions);
+    console.log('Email enviado com sucesso');
+  } catch (error) {
+    console.error('Erro ao enviar email:', error);
+    throw new Error('Falha ao enviar email.');
+  }
 };
 
 module.exports = sendEmail;

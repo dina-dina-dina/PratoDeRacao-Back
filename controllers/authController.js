@@ -1,7 +1,6 @@
 // backend/controllers/authController.js
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
-const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
 const crypto = require('crypto');
 
@@ -47,82 +46,7 @@ exports.register = async (req, res) => {
 
     res.status(201).json({ message: 'Usuário registrado com sucesso. Verifique seu email para a senha.' });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ message: 'Erro no servidor' });
-  }
-};
-
-exports.login = async (req, res) => {
-  // Validação
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  
-  const { email, password } = req.body;
-
-  try {
-    // Verificar se o usuário existe
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Credenciais inválidas' });
-    }
-
-    // Comparar senhas
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Credenciais inválidas' });
-    }
-
-    // Gerar JWT
-    const payload = {
-      user: {
-        id: user.id,
-        role: user.role,
-      },
-    };
-
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' },
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token, message: 'Login bem-sucedido' });
-      }
-    );
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ message: 'Erro no servidor' });
-  }
-};
-
-exports.changePassword = async (req, res) => {
-  // Validação
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  
-  const { oldPassword, newPassword } = req.body;
-  const userId = req.user.id;
-
-  try {
-    const user = await User.findById(userId);
-    
-    // Verificar senha antiga
-    const isMatch = await user.comparePassword(oldPassword);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Senha antiga incorreta' });
-    }
-
-    // Atualizar senha
-    user.password = newPassword;
-    await user.save();
-
-    res.json({ message: 'Senha atualizada com sucesso' });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ message: 'Erro no servidor' });
+    console.error('Erro no registro:', error);
+    res.status(500).json({ message: 'Erro no servidor durante o registro.', error: error.message });
   }
 };
