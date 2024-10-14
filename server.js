@@ -10,7 +10,14 @@ require('dotenv').config(); // Carrega variáveis de ambiente
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// Configuração do CORS
+const corsOptions = {
+  origin: 'https://pratoderacao-front.onrender.com', // Substitua pela URL do seu frontend no Render
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Conectar ao MongoDB
@@ -18,12 +25,12 @@ mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-  .then(() => {
-    console.log('Conectado ao MongoDB');
-  })
-  .catch((err) => {
-    console.error('Erro ao conectar ao MongoDB:', err);
-  });
+.then(() => {
+  console.log('Conectado ao MongoDB');
+})
+.catch((err) => {
+  console.error('Erro ao conectar ao MongoDB:', err);
+});
 
 // Definir esquema e modelo de usuário
 const userSchema = new mongoose.Schema({
@@ -42,26 +49,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Rota de exemplo
+// Rota de exemplo para verificar o funcionamento
 app.get('/', (req, res) => {
   res.send('API do Prato de Ração está funcionando!');
-});
-
-// Rota para login
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-
-  try {
-    const user = await User.findOne({ email: username });
-    if (user && await bcrypt.compare(password, user.password)) {
-      res.json({ success: true, message: 'Login realizado com sucesso!' });
-    } else {
-      res.status(401).json({ success: false, message: 'Usuário ou senha incorretos.' });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
-  }
 });
 
 // Rota para registro
@@ -97,30 +87,6 @@ app.post('/register', async (req, res) => {
   } catch (error) {
     console.error('Erro ao registrar usuário:', error);
     res.status(500).json({ success: false, message: 'Erro ao registrar usuário. Tente novamente mais tarde.' });
-  }
-});
-
-// Rota para troca de senha
-app.post('/change-password', async (req, res) => {
-  const { email, oldPassword, newPassword } = req.body;
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ success: false, message: 'Usuário não encontrado.' });
-    }
-
-    if (!await bcrypt.compare(oldPassword, user.password)) {
-      return res.status(401).json({ success: false, message: 'Senha atual incorreta.' });
-    }
-
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedNewPassword;
-    await user.save();
-    res.json({ success: true, message: 'Senha atualizada com sucesso!' });
-  } catch (error) {
-    console.error('Erro ao trocar senha:', error);
-    res.status(500).json({ success: false, message: 'Erro ao trocar senha. Tente novamente mais tarde.' });
   }
 });
 
