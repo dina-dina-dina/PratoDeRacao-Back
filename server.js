@@ -1,9 +1,10 @@
-// server.js
+// backend/server.js
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 require('dotenv').config(); // Carrega variáveis de ambiente
 
 const app = express();
@@ -52,7 +53,7 @@ app.post('/login', async (req, res) => {
 
   try {
     const user = await User.findOne({ email: username });
-    if (user && user.password === password) {
+    if (user && await bcrypt.compare(password, user.password)) {
       res.json({ success: true, message: 'Login realizado com sucesso!' });
     } else {
       res.status(401).json({ success: false, message: 'Usuário ou senha incorretos.' });
@@ -76,8 +77,11 @@ app.post('/register', async (req, res) => {
     // Gera uma senha aleatória de 8 caracteres
     const randomPassword = crypto.randomBytes(4).toString('hex');
 
+    // Hash da senha
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
     // Cria e salva o novo usuário
-    const newUser = new User({ email, password: randomPassword });
+    const newUser = new User({ email, password: hashedPassword });
     await newUser.save();
 
     // Envia o email com a senha
@@ -106,11 +110,12 @@ app.post('/change-password', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Usuário não encontrado.' });
     }
 
-    if (user.password !== oldPassword) {
+    if (!await bcrypt.compare(oldPassword, user.password)) {
       return res.status(401).json({ success: false, message: 'Senha atual incorreta.' });
     }
 
-    user.password = newPassword;
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
     await user.save();
     res.json({ success: true, message: 'Senha atualizada com sucesso!' });
   } catch (error) {
