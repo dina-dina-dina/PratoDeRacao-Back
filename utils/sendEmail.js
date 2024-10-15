@@ -13,7 +13,7 @@ const sendEmail = async (options) => {
     from: `"Pet Tech" <${process.env.EMAIL_USER}>`,
     to: options.to,
     subject: options.subject,
-    text: options.text,
+    html: options.html,
   };
 
   await transporter.sendMail(mailOptions);
