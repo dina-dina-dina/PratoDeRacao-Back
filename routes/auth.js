@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post('/register', [
   body('email').isEmail().withMessage('Email inválido'),
-  body('password').isLength({ min: 6 }).withMessage('A senha deve ter pelo menos 6 caracteres'),
+ // body('password').isLength({ min: 6 }).withMessage('A senha deve ter pelo menos 6 caracteres'),
 ], authController.register);
 
 router.post('/login', [

@@ -1,3 +1,4 @@
+const crypto = require('crypto'); // Adicione este módulo para gerar senhas aleatórias
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
@@ -10,7 +11,7 @@ exports.register = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { email, password } = req.body;
+  const { email } = req.body; // Agora só precisamos do email
 
   try {
     let user = await User.findOne({ email });
@@ -18,17 +19,25 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Usuário já registrado' });
     }
 
-    user = new User({ email, password });
-    await user.save();
+    // Gerar senha aleatória de 12 caracteres
+    const randomPassword = crypto.randomBytes(6).toString('hex'); // Gera uma senha aleatória
 
-    // Enviar email de boas-vindas (opcional)
-    await sendEmail({
-      to: email,
-      subject: 'Bem-vindo ao Pet Tech',
-      text: `Sua conta foi criada com sucesso.`,
+    // Criar novo usuário com a senha gerada
+    user = new User({
+      email,
+      password: randomPassword // A senha será criptografada no pre-save hook do modelo User
     });
 
-    res.status(201).json({ message: 'Usuário registrado com sucesso.' });
+    await user.save();
+
+    // Enviar email ao usuário com a senha gerada
+    await sendEmail({
+      to: email,
+      subject: 'Bem-vindo ao Prato de Ração',
+      text: `Sua conta foi criada com sucesso. Sua senha de acesso é: ${randomPassword}`,
+    });
+
+    res.status(201).json({ message: 'Usuário registrado com sucesso. Verifique seu e-mail para a senha.' });
   } catch (error) {
     res.status(500).json({ message: 'Erro no servidor', error: error.message });
   }
