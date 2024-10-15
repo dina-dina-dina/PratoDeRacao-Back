@@ -1,8 +1,9 @@
+// utils/sendEmail.js
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
-    service: 'Gmail',  // Ou outro provedor
+    service: 'Gmail',
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -10,10 +11,11 @@ const sendEmail = async (options) => {
   });
 
   const mailOptions = {
-    from: `"Pet Tech" <${process.env.EMAIL_USER}>`,
+    from: `Prato de Ração <${process.env.EMAIL_USER}>`,
     to: options.to,
     subject: options.subject,
-    html: options.html,
+    text: options.text,  // Conteúdo de fallback se o HTML falhar
+    html: options.html   // Conteúdo formatado em HTML
   };
 
   await transporter.sendMail(mailOptions);

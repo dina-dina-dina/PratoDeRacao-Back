@@ -31,10 +31,17 @@ exports.register = async (req, res) => {
     await user.save();
 
     // Enviar email ao usuário com a senha gerada
+    const message = `
+      <h1>Bem-vindo ao Prato de Ração!</h1>
+      <p>Sua conta foi criada com sucesso. Sua senha de acesso é: <strong>${randomPassword}</strong></p>
+      <p>Por favor, faça login e altere sua senha assim que possível.</p>
+    `;
+
     await sendEmail({
       to: email,
       subject: 'Bem-vindo ao Prato de Ração',
-      text: `Sua conta foi criada com sucesso. Sua senha de acesso é: ${randomPassword}`,
+      text: `Sua conta foi criada com sucesso. Sua senha de acesso é: ${randomPassword}`,  // Texto simples
+      html: message  // Conteúdo em HTML
     });
 
     res.status(201).json({ message: 'Usuário registrado com sucesso. Verifique seu e-mail para a senha.' });
@@ -42,6 +49,7 @@ exports.register = async (req, res) => {
     res.status(500).json({ message: 'Erro no servidor', error: error.message });
   }
 };
+
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
