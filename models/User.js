@@ -1,4 +1,3 @@
-// backend/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -10,27 +9,23 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
-  username: { // Opcional, se desejar
-    type: String,
-    trim: true,
-  },
   password: {
     type: String,
     required: true,
   },
-  role: { // 'admin' ou 'user'
-    type: String,
-    enum: ['admin', 'user'],
-    default: 'user',
-  },
   pet: {
     name: { type: String },
     age: { type: Number },
-    photo: { type: String }, // URL ou caminho da imagem
+    photo: { type: String },  // URL ou caminho da imagem
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
   },
 }, { timestamps: true });
 
-// Método para comparar senha
+// Função para comparar a senha
 userSchema.methods.comparePassword = async function(password) {
   return await bcrypt.compare(password, this.password);
 };
@@ -38,7 +33,7 @@ userSchema.methods.comparePassword = async function(password) {
 // Middleware para hash de senha antes de salvar
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-  
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();

@@ -1,52 +1,83 @@
-// backend/controllers/authController.js
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
+const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
-const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 exports.register = async (req, res) => {
-  // Validação
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  
-  const { email } = req.body;
+
+  const { email, password } = req.body;
 
   try {
-    // Verificar se o usuário já existe
     let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ message: 'Usuário já registrado' });
     }
 
-    // Gerar senha aleatória
-    const randomPassword = crypto.randomBytes(8).toString('hex');
-
-    // Criar novo usuário
-    user = new User({
-      email,
-      password: randomPassword,
-    });
-
+    user = new User({ email, password });
     await user.save();
 
-    // Enviar email com a senha
-    const message = `
-      <h1>Bem-vindo à Pet Tech!</h1>
-      <p>Sua senha de acesso é: <strong>${randomPassword}</strong></p>
-      <p>Por favor, faça login e altere sua senha.</p>
-    `;
-
+    // Enviar email de boas-vindas (opcional)
     await sendEmail({
       to: email,
-      subject: 'Cadastro na Pet Tech',
-      html: message,
+      subject: 'Bem-vindo ao Pet Tech',
+      text: `Sua conta foi criada com sucesso.`,
     });
 
-    res.status(201).json({ message: 'Usuário registrado com sucesso. Verifique seu email para a senha.' });
+    res.status(201).json({ message: 'Usuário registrado com sucesso.' });
   } catch (error) {
-    console.error('Erro no registro:', error);
-    res.status(500).json({ message: 'Erro no servidor durante o registro.', error: error.message });
+    res.status(500).json({ message: 'Erro no servidor', error: error.message });
+  }
+};
+
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Credenciais inválidas' });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Credenciais inválidas' });
+    }
+
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
+
+    res.json({ token, message: 'Login bem-sucedido' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro no servidor', error: error.message });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    const isMatch = await user.comparePassword(oldPassword);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Senha antiga incorreta' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: 'Senha atualizada com sucesso' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro no servidor', error: error.message });
   }
 };
