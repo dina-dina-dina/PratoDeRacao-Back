@@ -13,7 +13,10 @@ mongoose.connect(process.env.MONGODB_URI, {
   .catch(err => console.error('Erro ao conectar ao MongoDB', err));
 
 // Middlewares
-app.use(cors()); // Configure CORS conforme necessário
+app.use(cors({
+  origin: 'https://pratoderacao-front.onrender.com', // Ou o domínio do seu frontend em produção
+  credentials: true,  // Permitir cookies ou headers de autenticação
+}));
 app.use(express.json()); // Parse de JSON
 
 // Rotas
