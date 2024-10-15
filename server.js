@@ -5,6 +5,9 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const app = express();
 
+const allowedOrigins = ['http://localhost:3000', 'https://pratoderacao-front.onrender.com'];
+
+
 // Conectar ao MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
 }).then(() => console.log('Conectado ao MongoDB'))
@@ -12,8 +15,14 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // Middlewares
 app.use(cors({
-  origin: 'https://pratoderacao-front.onrender.com', // Ou o domínio do seu frontend em produção
-  credentials: true,  // Permitir cookies ou headers de autenticação
+  origin: function (origin, callback) {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,  // Se precisar enviar cookies ou headers de autenticação
 }));
 app.use(express.json()); // Parse de JSON
 
