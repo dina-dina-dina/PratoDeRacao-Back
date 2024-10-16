@@ -1,5 +1,5 @@
-const Pet = require('./models/Pet');
-const Tutor = require('./models/Tutor');
+const Pet = require('../models/Pet_temp');
+const Tutor = require('../models/Tutor_temp');
 
 exports.createPet = async (req, res) => {
   const { nome, raca, nascimento, peso, pesoRacao, tutorId } = req.body;

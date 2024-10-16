@@ -1,4 +1,4 @@
-const Tutor = require('./models/Tutor');
+const Tutor = require('../models/Tutor_temp');
 
 exports.createTutor = async (req, res) => {
   const { nome, email, telefone } = req.body;
