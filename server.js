@@ -16,17 +16,13 @@ mongoose.connect(process.env.MONGODB_URI, {
   .catch(err => console.error('Erro ao conectar ao MongoDB', err));
 
 // Middlewares
+const cors = require('cors');
+
 app.use(cors({
-  origin: function (origin, callback) {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,  // Se precisar enviar cookies ou headers de autenticação
+  origin: 'https://pratoderacao-front.onrender.com', // Substitua pelo domínio do seu frontend em produção
+  credentials: true,
 }));
-app.use(express.json()); // Parse de JSON
+
 
 // Rotas
 app.use('/api/auth', authRoutes);
