@@ -76,25 +76,35 @@ exports.login = async (req, res) => {
 };
 
 exports.changePassword = async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
-  const userId = req.user.id;
-
   try {
+    const { oldPassword, newPassword } = req.body;
+
+    // Verificar se o usuário foi passado corretamente
+    if (!req.user || !req.user.userId) {
+      return res.status(400).json({ message: 'Usuário não encontrado' });
+    }
+
+    const userId = req.user.userId;
+
+    // Procurar o usuário pelo ID
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
 
+    // Verificar se a senha antiga é válida
     const isMatch = await user.comparePassword(oldPassword);
     if (!isMatch) {
       return res.status(400).json({ message: 'Senha antiga incorreta' });
     }
 
+    // Atualizar a senha
     user.password = newPassword;
     await user.save();
 
     res.json({ message: 'Senha atualizada com sucesso' });
   } catch (error) {
+    console.error('Erro ao trocar senha:', error.message);
     res.status(500).json({ message: 'Erro no servidor', error: error.message });
   }
 };
