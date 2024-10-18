@@ -10,14 +10,23 @@ const TutorSchema = new mongoose.Schema({
   },
   nome: {
     type: String,
-    required: true,
     trim: true,
   },
   telefone: {
     type: String,
-    required: true,
     trim: true,
   },
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
+});
+
+// Virtual para pets
+TutorSchema.virtual('pets', {
+  ref: 'Pet',
+  localField: '_id',
+  foreignField: 'tutor',
+});
 
 module.exports = mongoose.model('Tutor', TutorSchema);
