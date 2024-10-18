@@ -1,28 +1,32 @@
 // utils/sendEmail.js
 const nodemailer = require('nodemailer');
-const dotenv = require('dotenv');
 
-dotenv.config();
+const sendEmail = async (to, subject, html) => {
+  try {
+    // Configuração do transporter
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail', // ou outro serviço de email
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-const sendEmail = async (to, subject, text) => {
-  // Configuração do transporter
-  const transporter = nodemailer.createTransport({
-    service: 'Gmail', // Ou outro serviço de email
-    auth: {
-      user: process.env.EMAIL_USER, // Seu email
-      pass: process.env.EMAIL_PASS, // Sua senha de email
-    },
-  });
+    // Opções do email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      html,
+    };
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to,
-    subject,
-    text,
-  };
-
-  // Enviar email
-  await transporter.sendMail(mailOptions);
+    // Enviar email
+    await transporter.sendMail(mailOptions);
+    console.log('Email enviado com sucesso para', to);
+  } catch (error) {
+    console.error('Erro ao enviar email:', error);
+    throw new Error('Erro ao enviar email.');
+  }
 };
 
 module.exports = sendEmail;

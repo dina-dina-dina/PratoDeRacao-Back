@@ -1,23 +1,20 @@
 // routes/pets.js
 const express = require('express');
 const router = express.Router();
-const petsController = require('../controllers/petsController');
 const authenticate = require('../middlewares/authenticate');
+const { getPets, createPet, updatePet, deletePet } = require('../controllers/petsController');
 const upload = require('../middlewares/upload');
 
-// Obter todos os pets do tutor
-router.get('/', authenticate, petsController.getPets);
+// Rota para obter todos os pets do tutor
+router.get('/', authenticate, getPets);
 
-// Obter um pet específico
-router.get('/:id', authenticate, petsController.getPetById);
+// Rota para criar um novo pet
+router.post('/', authenticate, upload.single('imagem'), createPet);
 
-// Criar um novo pet (com upload de imagem opcional)
-router.post('/', authenticate, upload.single('imagem'), petsController.createPet);
+// Rota para atualizar um pet existente
+router.put('/:id', authenticate, upload.single('imagem'), updatePet);
 
-// Atualizar informações do pet
-router.put('/:id', authenticate, upload.single('imagem'), petsController.updatePet);
-
-// Deletar um pet
-router.delete('/:id', authenticate, petsController.deletePet);
+// Rota para remover um pet
+router.delete('/:id', authenticate, deletePet);
 
 module.exports = router;

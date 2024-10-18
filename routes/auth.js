@@ -1,15 +1,19 @@
 // routes/auth.js
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/authController');
+const { register, login, confirmEmail, changePassword } = require('../controllers/authController');
+const authenticate = require('../middlewares/authenticate');
 
-// Registro de usuário
-router.post('/register', authController.register);
+// Rota para registro
+router.post('/register', register);
 
-// Login de usuário
-router.post('/login', authController.login);
+// Rota para login
+router.post('/login', login);
 
-// Troca de senha
-router.post('/change-password', authController.changePassword);
+// Rota para confirmação de email
+router.get('/confirmar-email', confirmEmail);
+
+// Rota para trocar a senha
+router.post('/change-password', authenticate, changePassword);
 
 module.exports = router;

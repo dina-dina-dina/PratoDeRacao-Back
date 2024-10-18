@@ -1,54 +1,36 @@
 // controllers/petsController.js
-const Pet = require("../models/Pet_temp");
-const Tutor = require("../models/Tutor_temp");
+const Pet = require('../models/Pet_temp');
+const Tutor = require('../models/Tutor_temp');
 
 // Obter todos os pets do tutor
-exports.getPets = async (req, res) => {
+const getPets = async (req, res) => {
   try {
     const tutor = await Tutor.findOne({ user: req.user._id });
     if (!tutor) {
-      return res.status(404).json({ message: "Tutor não encontrado" });
+      return res.status(404).json({ message: 'Perfil do tutor não encontrado.' });
     }
 
     const pets = await Pet.find({ tutor: tutor._id });
     res.json(pets);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor" });
-  }
-};
-
-// Obter um pet específico
-exports.getPetById = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const pet = await Pet.findById(id);
-    if (!pet) {
-      return res.status(404).json({ message: "Pet não encontrado" });
-    }
-
-    // Verifica se o pet pertence ao tutor
-    const tutor = await Tutor.findOne({ user: req.user._id });
-    if (pet.tutor.toString() !== tutor._id.toString()) {
-      return res.status(403).json({ message: "Acesso negado" });
-    }
-
-    res.json(pet);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor" });
+  } catch (error) {
+    console.error('Erro ao obter pets:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };
 
 // Criar um novo pet
-exports.createPet = async (req, res) => {
+const createPet = async (req, res) => {
   const { nome, raca, nascimento, peso, pesoRacao } = req.body;
+  const imagem = req.file ? req.file.filename : 'default_pet.jpg';
+
+  if (!nome || !raca || !nascimento || !peso || !pesoRacao) {
+    return res.status(400).json({ message: 'Por favor, preencha todos os campos.' });
+  }
 
   try {
     const tutor = await Tutor.findOne({ user: req.user._id });
     if (!tutor) {
-      return res.status(404).json({ message: "Tutor não encontrado" });
+      return res.status(404).json({ message: 'Perfil do tutor não encontrado.' });
     }
 
     const pet = new Pet({
@@ -58,33 +40,33 @@ exports.createPet = async (req, res) => {
       nascimento,
       peso,
       pesoRacao,
-      imagem: req.file ? req.file.path : undefined,
+      imagem,
     });
 
     await pet.save();
-
-    res.status(201).json({ message: "Pet criado com sucesso", pet });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor" });
+    res.status(201).json({ message: 'Pet criado com sucesso!', pet });
+  } catch (error) {
+    console.error('Erro ao criar pet:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };
 
-// Atualizar informações do pet
-exports.updatePet = async (req, res) => {
+// Atualizar um pet existente
+const updatePet = async (req, res) => {
   const { id } = req.params;
   const { nome, raca, nascimento, peso, pesoRacao } = req.body;
+  const imagem = req.file ? req.file.filename : undefined;
 
   try {
     const pet = await Pet.findById(id);
     if (!pet) {
-      return res.status(404).json({ message: "Pet não encontrado" });
+      return res.status(404).json({ message: 'Pet não encontrado.' });
     }
 
-    // Verifica se o pet pertence ao tutor
+    // Verificar se o pet pertence ao tutor
     const tutor = await Tutor.findOne({ user: req.user._id });
-    if (pet.tutor.toString() !== tutor._id.toString()) {
-      return res.status(403).json({ message: "Acesso negado" });
+    if (!tutor || pet.tutor.toString() !== tutor._id.toString()) {
+      return res.status(403).json({ message: 'Acesso proibido.' });
     }
 
     if (nome) pet.nome = nome;
@@ -92,38 +74,38 @@ exports.updatePet = async (req, res) => {
     if (nascimento) pet.nascimento = nascimento;
     if (peso) pet.peso = peso;
     if (pesoRacao) pet.pesoRacao = pesoRacao;
-    if (req.file) pet.imagem = req.file.path;
+    if (imagem) pet.imagem = imagem;
 
     await pet.save();
-
-    res.json({ message: "Pet atualizado com sucesso", pet });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor" });
+    res.json({ message: 'Pet atualizado com sucesso!', pet });
+  } catch (error) {
+    console.error('Erro ao atualizar pet:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };
 
-// Deletar um pet
-exports.deletePet = async (req, res) => {
+// Excluir um pet
+const deletePet = async (req, res) => {
   const { id } = req.params;
 
   try {
     const pet = await Pet.findById(id);
     if (!pet) {
-      return res.status(404).json({ message: "Pet não encontrado" });
+      return res.status(404).json({ message: 'Pet não encontrado.' });
     }
 
-    // Verifica se o pet pertence ao tutor
+    // Verificar se o pet pertence ao tutor
     const tutor = await Tutor.findOne({ user: req.user._id });
-    if (pet.tutor.toString() !== tutor._id.toString()) {
-      return res.status(403).json({ message: "Acesso negado" });
+    if (!tutor || pet.tutor.toString() !== tutor._id.toString()) {
+      return res.status(403).json({ message: 'Acesso proibido.' });
     }
 
     await pet.remove();
-
-    res.json({ message: "Pet deletado com sucesso" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor" });
+    res.json({ message: 'Pet removido com sucesso.' });
+  } catch (error) {
+    console.error('Erro ao remover pet:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };
+
+module.exports = { getPets, createPet, updatePet, deletePet };

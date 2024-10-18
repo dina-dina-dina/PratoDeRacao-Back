@@ -1,13 +1,13 @@
 // routes/users.js
 const express = require('express');
 const router = express.Router();
-const userController = require('../controllers/userController');
 const authenticate = require('../middlewares/authenticate');
+const { getUserProfile, updateUserProfile } = require('../controllers/userController');
 
-// Obter informações do usuário
-router.get('/me', authenticate, userController.getUserInfo);
+// Rota para obter perfil do usuário
+router.get('/me', authenticate, getUserProfile);
 
-// Atualizar informações do usuário
-router.put('/me', authenticate, userController.updateUserInfo);
+// Rota para atualizar perfil do usuário
+router.put('/me', authenticate, updateUserProfile);
 
 module.exports = router;
