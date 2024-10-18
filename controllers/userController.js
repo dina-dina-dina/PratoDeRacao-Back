@@ -1,48 +1,39 @@
+// controllers/userController.js
 const User = require('../models/User');
-const { validationResult } = require('express-validator');
+const Tutor = require('../models/Tutor');
 
-// Obter perfil do usuário
-exports.getMyProfile = async (req, res) => {
-  const userId = req.user.id;
-
+// Obter informações do usuário
+exports.getUserInfo = async (req, res) => {
   try {
-    const user = await User.findById(userId).select('-password'); // Remover senha
+    const user = await User.findById(req.user._id).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
     res.json(user);
-  } catch (error) {
-    res.status(500).json({ message: 'Erro no servidor', error: error.message });
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro no servidor' });
   }
 };
 
-// Atualizar perfil do usuário (ex. informações do pet)
-exports.updateMyProfile = async (req, res) => {
-  const userId = req.user.id;
-  const { pet } = req.body;
-  const photo = req.file ? `/uploads/${req.file.filename}` : undefined;
-
+// Atualizar informações do usuário
+exports.updateUserInfo = async (req, res) => {
+  const { email, password } = req.body;
+  
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
-
-    if (pet) {
-      user.pet = {
-        ...user.pet,
-        ...pet,
-      };
-    }
-
-    if (photo) {
-      user.pet.photo = photo;
-    }
-
+    
+    if (email) user.email = email;
+    if (password) user.password = password;
+    
     await user.save();
-
-    res.json({ message: 'Perfil atualizado com sucesso', user });
-  } catch (error) {
-    res.status(500).json({ message: 'Erro no servidor', error: error.message });
+    
+    res.json({ message: 'Informações atualizadas com sucesso' });
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro no servidor' });
   }
 };

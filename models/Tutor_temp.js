@@ -1,10 +1,23 @@
+// models/Tutor.js
 const mongoose = require('mongoose');
 
-const tutorSchema = new mongoose.Schema({
-  nome: { type: String, required: true },
-  email: { type: String, required: true, unique: true }, // Cada email é único
-  telefone: { type: String, required: true },
-  pets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Pet' }] // Lista de pets associados
+const TutorSchema = new mongoose.Schema({
+  user: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User',
+    required: true,
+    unique: true,
+  },
+  nome: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  telefone: {
+    type: String,
+    required: true,
+    trim: true,
+  },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Tutor', tutorSchema);
+module.exports = mongoose.model('Tutor', TutorSchema);

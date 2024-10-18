@@ -1,23 +1,39 @@
-const Tutor = require('../models/Tutor_temp');
+// controllers/tutorsController.js
+const Tutor = require('../models/Tutor');
+const User = require('../models/User');
 
-exports.createTutor = async (req, res) => {
-  const { nome, email, telefone } = req.body;
-
+// Obter informações do tutor
+exports.getTutorInfo = async (req, res) => {
   try {
-    const existingTutor = await Tutor.findOne({ email });
-    if (existingTutor) {
-      return res.status(400).json({ message: 'Tutor já cadastrado' });
+    const tutor = await Tutor.findOne({ user: req.user._id }).populate('user', 'email');
+    if (!tutor) {
+      return res.status(404).json({ message: 'Tutor não encontrado' });
     }
+    res.json(tutor);
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro no servidor' });
+  }
+};
 
-    const tutor = new Tutor({
-      nome,
-      email,
-      telefone,
-    });
-
+// Atualizar informações do tutor
+exports.updateTutorInfo = async (req, res) => {
+  const { nome, telefone } = req.body;
+  
+  try {
+    const tutor = await Tutor.findOne({ user: req.user._id });
+    if (!tutor) {
+      return res.status(404).json({ message: 'Tutor não encontrado' });
+    }
+    
+    if (nome) tutor.nome = nome;
+    if (telefone) tutor.telefone = telefone;
+    
     await tutor.save();
-    res.status(201).json({ message: 'Tutor cadastrado com sucesso', tutor });
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao cadastrar tutor', error: error.message });
+    
+    res.json({ message: 'Informações do tutor atualizadas com sucesso' });
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro no servidor' });
   }
 };

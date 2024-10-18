@@ -1,11 +1,13 @@
+// routes/users.js
 const express = require('express');
+const router = express.Router();
 const userController = require('../controllers/userController');
 const authenticate = require('../middlewares/authenticate');
-const upload = require('../middlewares/upload'); // Middleware de upload de arquivos
-const router = express.Router();
 
-// Rotas para obter e atualizar perfil
-router.get('/me', authenticate, userController.getMyProfile);
-router.put('/me/profile', authenticate, upload.single('photo'), userController.updateMyProfile);
+// Obter informações do usuário
+router.get('/me', authenticate, userController.getUserInfo);
+
+// Atualizar informações do usuário
+router.put('/me', authenticate, userController.updateUserInfo);
 
 module.exports = router;

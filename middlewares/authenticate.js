@@ -1,25 +1,29 @@
+// middlewares/authenticate.js
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const dotenv = require('dotenv');
 
-const authenticate = (req, res, next) => {
+dotenv.config();
+
+const authenticate = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Autenticação inválida' });
+  }
+  
+  const token = authHeader.split(' ')[1];
+  
   try {
-    const authHeader = req.header('Authorization');
-    if (!authHeader) {
-      return res.status(401).json({ message: 'Token não fornecido' });
-    }
-
-    // Extrair o token do cabeçalho Authorization
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ message: 'Token inválido' });
-    }
-
-    // Verificar o token JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Passar o usuário decodificado para `req.user`
-    
+    req.user = await User.findById(decoded.id).select('-password');
+    if (!req.user) {
+      return res.status(401).json({ message: 'Usuário não encontrado' });
+    }
     next();
-  } catch (error) {
-    return res.status(401).json({ message: 'Token inválido ou expirado' });
+  } catch (err) {
+    console.error(err);
+    res.status(401).json({ message: 'Token inválido' });
   }
 };
 

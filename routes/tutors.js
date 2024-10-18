@@ -1,21 +1,13 @@
+// routes/tutors.js
 const express = require('express');
 const router = express.Router();
-const Tutor = require('../models/Tutor_temp');
+const tutorsController = require('../controllers/tutorsController');
+const authenticate = require('../middlewares/authenticate');
 
-// Rota para buscar o perfil do tutor logado
-router.get('/me', async (req, res) => {
-  try {
-    const { email } = req.user; // Email vindo do token ou localStorage
+// Obter informações do tutor
+router.get('/me', authenticate, tutorsController.getTutorInfo);
 
-    const tutor = await Tutor.findOne({ email }).populate('pets'); // Carregar os pets do tutor
-    if (!tutor) {
-      return res.status(404).json({ message: 'Tutor não encontrado' });
-    }
-
-    res.json(tutor);
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar perfil', error: error.message });
-  }
-});
+// Atualizar informações do tutor
+router.put('/me', authenticate, tutorsController.updateTutorInfo);
 
 module.exports = router;

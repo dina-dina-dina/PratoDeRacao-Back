@@ -1,110 +1,92 @@
-const crypto = require('crypto'); // Adicione este módulo para gerar senhas aleatórias
+// controllers/authController.js
 const User = require('../models/User');
-const { validationResult } = require('express-validator');
+const Tutor = require('../models/Tutor');
 const jwt = require('jsonwebtoken');
-const sendEmail = require('../utils/sendEmail');
-const bcrypt = require('bcryptjs');
+const dotenv = require('dotenv');
 
+dotenv.config();
+
+// Função para gerar JWT
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+};
+
+// Registro de novo usuário
 exports.register = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  const { email } = req.body; // Agora só precisamos do email
-
+  const { email, password } = req.body;
+  
   try {
+    // Verifica se o usuário já existe
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ message: 'Usuário já registrado' });
+      return res.status(400).json({ message: 'Usuário já existe' });
     }
-
-    // Gerar senha aleatória de 12 caracteres
-    const randomPassword = crypto.randomBytes(6).toString('hex'); // Gera uma senha aleatória
-
-    // Criar novo usuário com a senha gerada
-    user = new User({
-      email,
-      password: randomPassword // A senha será criptografada no pre-save hook do modelo User
-    });
-
+    
+    // Cria novo usuário
+    user = new User({ email, password });
     await user.save();
-
-    // Enviar email ao usuário com a senha gerada
-    const message = `
-      <h1>Bem-vindo ao Prato de Ração!</h1>
-      <p>Sua conta foi criada com sucesso. Sua senha de acesso é: <strong>${randomPassword}</strong></p>
-      <p>Por favor, faça login e altere sua senha assim que possível.</p>
-    `;
-
-    await sendEmail({
-      to: email,
-      subject: 'Bem-vindo ao Prato de Ração',
-      text: `Sua conta foi criada com sucesso. Sua senha de acesso é: ${randomPassword}`,  // Texto simples
-      html: message  // Conteúdo em HTML
-    });
-
-    res.status(201).json({ message: 'Usuário registrado com sucesso. Verifique seu e-mail para a senha.' });
-  } catch (error) {
-    res.status(500).json({ message: 'Erro no servidor', error: error.message });
+    
+    // Cria perfil de tutor associado ao usuário
+    const tutor = new Tutor({ user: user._id, nome: '', telefone: '' });
+    await tutor.save();
+    
+    res.status(201).json({ message: 'Usuário registrado com sucesso' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro no servidor' });
   }
 };
 
-
+// Login de usuário
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-
+  
   try {
+    // Verifica se o usuário existe
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'Credenciais inválidas' });
     }
-
+    
+    // Verifica a senha
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Credenciais inválidas' });
     }
-
-    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
-
-    res.json({ token, message: 'Login bem-sucedido' });
-  } catch (error) {
-    res.status(500).json({ message: 'Erro no servidor', error: error.message });
+    
+    // Gera token
+    const token = generateToken(user._id);
+    
+    res.json({ token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro no servidor' });
   }
 };
 
+// Troca de senha
 exports.changePassword = async (req, res) => {
+  const { email, oldPassword, newPassword } = req.body;
+  
   try {
-    const { oldPassword, newPassword } = req.body;
-
-    // Verificar se o usuário foi passado corretamente
-    if (!req.user || !req.user.userId) {
+    const user = await User.findOne({ email });
+    if (!user) {
       return res.status(400).json({ message: 'Usuário não encontrado' });
     }
-
-    const userId = req.user.userId;
-
-    // Procurar o usuário pelo ID
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
-    }
-
-    // Verificar se a senha antiga é válida
+    
+    // Verifica a senha atual
     const isMatch = await user.comparePassword(oldPassword);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Senha antiga incorreta' });
+      return res.status(400).json({ message: 'Senha atual incorreta' });
     }
-
-    // Atualizar a senha
+    
+    // Atualiza a senha
     user.password = newPassword;
     await user.save();
-
+    
     res.json({ message: 'Senha atualizada com sucesso' });
-  } catch (error) {
-    console.error('Erro ao trocar senha:', error.message);
-    res.status(500).json({ message: 'Erro no servidor', error: error.message });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro no servidor' });
   }
 };
