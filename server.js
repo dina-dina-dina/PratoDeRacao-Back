@@ -10,9 +10,6 @@ const tutorRoutes = require('./routes/tutors');
 const petRoutes = require('./routes/pets');
 
 const app = express();
-app.get('/', (req, res) => {
-  res.send('Servidor Backend está funcionando!');
-});
 
 // Middlewares
 app.use(cors());

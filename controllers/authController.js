@@ -36,43 +36,30 @@ const changePassword = async (req, res) => {
 };
 
 
+// controllers/authController.js
 const register = async (req, res) => {
   const { email, password, nome, telefone } = req.body;
 
-  if (!email || !password || !nome || !telefone) {
-    return res.status(400).json({ message: 'Por favor, preencha todos os campos.' });
+  if (!email || !password || !nome) { // Removido telefone da validação
+    return res.status(400).json({ message: 'Email, senha e nome são obrigatórios.' });
   }
 
   try {
-    // Verificar se o usuário já existe
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ message: 'Usuário já registrado.' });
+      return res.status(400).json({ message: 'Usuário já existe.' });
     }
 
-    // Criar novo usuário
     user = new User({ email, password });
     await user.save();
 
-    // Criar perfil de tutor
-    const tutor = new Tutor({
-      user: user._id,
-      nome,
-      telefone,
-    });
+    const tutor = new Tutor({ user: user._id, nome, telefone }); // telefone pode ser undefined
     await tutor.save();
 
-    // Gerar token de verificação (opcional)
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const url = `http://localhost:${process.env.PORT}/api/auth/confirmar-email?token=${token}`;
 
-    // Enviar email de confirmação
-    const confirmLink = `http://localhost:3000/confirmar-email?token=${token}`;
-    const html = `
-      <h1>Bem-vindo ao Pet Tech Tracker!</h1>
-      <p>Obrigado por se registrar. Por favor, clique no link abaixo para confirmar seu email:</p>
-      <a href="${confirmLink}">Confirmar Email</a>
-    `;
-    await sendEmail(email, 'Confirme seu Email', html);
+    await sendEmail(user.email, 'Confirme seu Email', `Clique no link para confirmar seu email: ${url}`);
 
     res.status(201).json({ message: 'Usuário registrado com sucesso. Verifique seu email para confirmação.' });
   } catch (error) {
@@ -80,6 +67,7 @@ const register = async (req, res) => {
     res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };
+
 
 const login = async (req, res) => {
   const { email, password } = req.body;
