@@ -56,8 +56,8 @@ const register = async (req, res) => {
     const tutor = new Tutor({ user: user._id, nome, telefone }); // telefone pode ser undefined
     await tutor.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    const url = `http://localhost:${process.env.PORT}/api/auth/confirmar-email?token=${token}`;
+    const token = jwt.sign({ id: user._id }, "123456", { expiresIn: '1d' });
+    const url = `http://localhost:5000/api/auth/confirmar-email?token=${token}`;
 
     await sendEmail(user.email, 'Confirme seu Email', `Clique no link para confirmar seu email: ${url}`);
 
