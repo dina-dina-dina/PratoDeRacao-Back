@@ -64,7 +64,7 @@ const register = async (req, res) => {
     res.status(201).json({ message: 'Usuário registrado com sucesso. Verifique seu email para confirmação.' });
   } catch (error) {
     console.error('Erro no registro:', error);
-    res.status(500).json({ message: 'Erro interno do servidor.' });
+    res.status(402).json({ message: error});
   }
 };
 
