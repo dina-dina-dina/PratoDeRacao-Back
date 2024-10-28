@@ -57,7 +57,7 @@ const register = async (req, res) => {
     await tutor.save();
 
     const token = jwt.sign({ id: user._id }, "123456", { expiresIn: '1d' });
-    const url = `http://localhost:5000/api/auth/confirmar-email?token=${token}`;
+    const url = `https://pratoderacao-front.onrender.com/api/auth/confirmar-email?token=${token}`;
 
     await sendEmail(user.email, 'Confirme seu Email', `Clique no link para confirmar seu email: ${url}`);
 
